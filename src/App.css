@@ -126,3 +126,32 @@
   -webkit-text-fill-color: transparent;
   font-weight: 900;
 }
+
+/* 再生ボタン全体のスタイル */
+.audio-button {
+  background-color: #ff5722; /* メインのオレンジ色 */
+  border: none;
+  border-radius: 50%; /* 丸くする */
+  width: 50px;       /* 大きさ */
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(255, 87, 34, 0.3); /* オレンジ系の影 */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 8px; /* SHUFFLEボタンとの間隔 */
+}
+
+/* タップした時のアニメーション */
+.audio-button:active {
+  transform: scale(0.9) translateY(2px);
+  box-shadow: 0 2px 3px rgba(255, 87, 34, 0.2);
+}
+
+/* 中のSVGアイコンの色 */
+.audio-icon {
+  fill: white;
+  width: 24px;
+  height: 24px;
+}

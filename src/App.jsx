@@ -28,7 +28,17 @@ function App() {
     setIsReady(true);
   }, []);
 
-  // ロード中は何もしない
+  // --- 音声再生関数 ---
+  const playAudio = (text) => {
+    if (!text) return;
+    // 実行中の音声をキャンセル（連打対策）
+    window.speechSynthesis.cancel();
+    const uttr = new SpeechSynthesisUtterance(text);
+    uttr.lang = 'de-DE'; // ドイツ語
+    uttr.rate = 0.9;     // 速度（少し聞き取りやすく）
+    window.speechSynthesis.speak(uttr);
+  };
+
   if (!isReady) return null;
 
   // 現在表示すべき単語（番号から実体を取得）
@@ -123,6 +133,19 @@ function App() {
           {/* アクションエリア：ここがSafariの最下部にぶつからないように調整 */}
           <div className="flex flex-col items-center gap-3 w-full max-w-sm mb-4">
             
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                playAudio(currentWord.de);
+              }}
+              className="audio-button" // CSSクラスを適用
+              aria-label="音声再生"
+            >
+              {/* 白抜きの再生アイコン(SVG) */}
+              <svg className="audio-icon" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/> {/* 再生三角形のパス */}
+              </svg>
+            </button>
             <button 
               onClick={shuffleWords}
               className="flex items-center gap-2 text-orange-400 bg-white px-4 py-1 rounded-full text-[10px] font-bold shadow-sm border border-orange-100 active:scale-95 transition-all"
