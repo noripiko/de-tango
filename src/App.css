@@ -3,9 +3,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800&display=swap');
 
-/* 3Dカードの土台 */
+/* App.css */
+
+.safe-container {
+  /* Dynamic Viewport Heightを使いつつ、古いSafari向けに100vhも併記 */
+  height: 100vh;
+  height: 100dvh;
+  
+  /* iOS Safariの下部ツールバー/ホームインジケーター分の余白を強制確保 */
+  padding-bottom: env(safe-area-inset-bottom);
+  
+  /* 念のため、コンテンツがはみ出さないように調整 */
+  box-sizing: border-box;
+}
+
+/* カードのサイズを画面高さに合わせて可変にする */
 .card-container {
   perspective: 1000px;
+  /* 画面が小さいときはカードを小さく、大きいときは最大400pxまで */
+  height: 35vh; 
+  min-height: 280px;
+  max-height: 400px;
 }
 
 /* 回転する中身：高速かつ可愛い動き (0.2s cubic-bezier) */
