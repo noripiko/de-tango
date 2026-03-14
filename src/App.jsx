@@ -3,6 +3,7 @@ import './App.css'
 import { wordList } from './data/wordList'
 
 function App() {
+  // 1. 習得済み単語のID（インデックス）を保持
   const [learnedIds, setLearnedIds] = useState(() => {
     const saved = localStorage.getItem('learned_words');
     try {
@@ -12,65 +13,80 @@ function App() {
     }
   });
 
-  // 未習得の単語リストを管理するstate
-  const [unlearnedWords, setUnlearnedWords] = useState([]);
+  // 2. 「まだ覚えていない単語の番号」だけのリスト（これが3000個あっても爆速の秘密）
+  const [unlearnedIndices, setUnlearnedIndices] = useState([]);
   const [index, setIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-
   const [isReady, setIsReady] = useState(false);
-  // learnedIdsが変わるたびに未習得リストを更新
+
+  // 初回起動時に「まだ覚えていない番号」を一度だけ抽出
   useEffect(() => {
-    const filtered = wordList.filter((_, i) => !learnedIds.includes(i));
-    setUnlearnedWords(filtered);
-    localStorage.setItem('learned_words', JSON.stringify(learnedIds));
-
+    const indices = wordList
+      .map((_, i) => i)
+      .filter(i => !learnedIds.includes(i));
+    setUnlearnedIndices(indices);
     setIsReady(true);
-  }, [learnedIds]);
+  }, []);
 
-  // 3. 【追加】Readyになるまでは何も表示しない（または真っ白な画面）
+  // ロード中は何もしない
   if (!isReady) return null;
 
-  const currentWord = unlearnedWords[index] || null;
+  // 現在表示すべき単語（番号から実体を取得）
+  const currentWordIndex = unlearnedIndices[index];
+  const currentWord = currentWordIndex !== undefined ? wordList[currentWordIndex] : null;
 
+  // --- ハンドラー系 ---
+
+  // カードをめくる
   const handleCardClick = () => {
     if (currentWord) setIsFlipped(!isFlipped);
-  }
+  };
 
+  // 次へ（高速連打の肝）
   const handleNextButton = () => {
     setIsFlipped(false);
-    if (unlearnedWords.length > 0) {
-      setIndex((prev) => (prev + 1) % unlearnedWords.length);
+    if (unlearnedIndices.length > 0) {
+      setIndex((prev) => (prev + 1) % unlearnedIndices.length);
     }
   };
 
+  // 覚えた！
   const markAsLearned = () => {
-    if (!currentWord) return;
-    const originalIndex = wordList.findIndex(w => w.de === currentWord.de);
-    setLearnedIds([...learnedIds, originalIndex]);
+    if (currentWordIndex === undefined) return;
+
+    // 習得済みIDリストを更新して保存
+    const newLearnedIds = [...learnedIds, currentWordIndex];
+    setLearnedIds(newLearnedIds);
+    localStorage.setItem('learned_words', JSON.stringify(newLearnedIds));
+
+    // 今のノック用リストからこの単語を消す
+    const newIndices = unlearnedIndices.filter(i => i !== currentWordIndex);
+    setUnlearnedIndices(newIndices);
+
     setIsFlipped(false);
-    if (index >= unlearnedWords.length - 1) {
+    
+    // 最後の単語だったら0番目に戻す
+    if (index >= newIndices.length) {
       setIndex(0);
     }
   };
 
-  // シャッフル関数
+  // シャッフル（番号の配列を混ぜるだけなので3000個でも一瞬）
   const shuffleWords = () => {
-    if (unlearnedWords.length === 0) return;
-    
-    // 現在の未習得リストをシャッフル
-    const shuffled = [...unlearnedWords].sort(() => Math.random() - 0.5);
-    setUnlearnedWords(shuffled);
-    
-    // 状態をリセット
-    setIndex(0); 
-    setIsFlipped(false); // これで必ず「表（ドイツ語）」から始まる
+    if (unlearnedIndices.length === 0) return;
+    const shuffled = [...unlearnedIndices].sort(() => Math.random() - 0.5);
+    setUnlearnedIndices(shuffled);
+    setIndex(0);
+    setIsFlipped(false);
   };
 
-  // リセット機能
+  // 進捗リセット
   const resetProgress = () => {
     if (window.confirm("学習記録をリセットして、最初からやり直しますか？")) {
       setLearnedIds([]);
+      setUnlearnedIndices(wordList.map((_, i) => i)); // 全番号を復活
       setIndex(0);
+      localStorage.removeItem('learned_words');
     }
   };
 
