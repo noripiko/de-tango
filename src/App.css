@@ -1,6 +1,7 @@
 @import "tailwindcss";
 /* Google Fontsから、可愛くて読みやすい手書き風フォントを読み込む */
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800&display=swap');
 
 /* 3Dカードの土台 */
 .card-container {
@@ -46,4 +47,64 @@
   -webkit-text-fill-color: transparent; /* 文字自体は透明に */
   filter: drop-shadow(0px 3px 0px rgba(255, 255, 255, 0.8)); /* 白いぷっくりした影 */
   letter-spacing: -0.05em; /* 文字間隔を詰めて可愛く */
+}
+
+.title-container {
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* 「DE」を少し知的に */
+.text-de {
+  font-size: 4rem;
+  color: #333; /* 黒に近いグレー */
+  background: linear-gradient(180deg, #333 30%, #e11d48 30%, #e11d48 60%, #fbbf24 60%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(2px 2px 0px rgba(255, 255, 255, 0.8));
+}
+
+/* 「たんご」を可愛らしく */
+.text-tango {
+  font-size: 3.5rem;
+  color: #f97316; /* オレンジ */
+  position: relative;
+}
+
+/* アイコンや文字にアニメーションを少し */
+.title-container:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+/* 「たんご」の斜めを直して、密度を最適化 */
+.text-tango {
+  font-size: 3.5rem;
+  color: #f97316;
+  position: relative;
+  
+  /* 斜めを解除！ */
+  transform: none; 
+  display: inline-block;
+
+  /* 文字間隔をさらに絶妙に詰める */
+  letter-spacing: -0.15em; 
+  
+  /* 少しだけ上にずらして「DE」とのバランスを取る（必要に応じて） */
+  margin-top: -5px;
+
+  /* 縁取りを少し柔らかく */
+  -webkit-text-stroke: 0.5px #f97316;
+}
+
+/* 「DE」と「たんご」をより一体化させる */
+.text-de {
+  font-size: 4rem;
+  margin-right: -0.2em; /* ここをもう少し詰めると「DEたんご」が1つの塊に見えます */
+  
+  /* グラデーション設定 */
+  background: linear-gradient(180deg, #333 30%, #e11d48 30%, #e11d48 60%, #fbbf24 60%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
 }
