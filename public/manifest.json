@@ -1,0 +1,15 @@
+{
+  "short_name": "DEたんご",
+  "name": "DEたんご - ドイツ語単語帳",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "320x320"
+    }
+  ],
+  "start_url": "/de-tango/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
