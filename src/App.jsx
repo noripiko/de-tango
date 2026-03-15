@@ -14,17 +14,40 @@ function App() {
   });
 
   // 2. 「まだ覚えていない単語の番号」だけのリスト（これが3000個あっても爆速の秘密）
-  const [unlearnedIndices, setUnlearnedIndices] = useState([]);
-  const [index, setIndex] = useState(0);
+  const [unlearnedIndices, setUnlearnedIndices] = useState(() => {
+    // 保存された「並び順」があればそれを使い、なければ新規作成
+    const savedOrder = localStorage.getItem('current_order');
+    if (savedOrder) {
+      try {
+        return JSON.parse(savedOrder);
+      } catch (e) {
+        return [];
+      }
+    }
+    // 初回（またはデータ破損時）は learnedIds を除いたリストを作成
+    const savedLearned = localStorage.getItem('learned_words');
+    const learned = savedLearned ? JSON.parse(savedLearned) : [];
+    return wordList.map((_, i) => i).filter(i => !learned.includes(i));
+  });
+
+  // 3. いま何番目の単語を表示しているか
+  const [index, setIndex] = useState(() => {
+    const savedIndex = localStorage.getItem('last_index');
+    return savedIndex ? parseInt(savedIndex, 10) : 0;
+  });
+
   const [isFlipped, setIsFlipped] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
-  // 初回起動時に「まだ覚えていない番号」を一度だけ抽出
+  // 状態が変わるたびに localStorage に保存する
   useEffect(() => {
-    const indices = wordList
-      .map((_, i) => i)
-      .filter(i => !learnedIds.includes(i));
-    setUnlearnedIndices(indices);
+    localStorage.setItem('learned_words', JSON.stringify(learnedIds));
+    localStorage.setItem('current_order', JSON.stringify(unlearnedIndices));
+    localStorage.setItem('last_index', index.toString());
+  }, [learnedIds, unlearnedIndices, index]);
+
+  // 初回起動時の準備完了フラグ
+  useEffect(() => {
     setIsReady(true);
   }, []);
 
@@ -67,7 +90,6 @@ function App() {
     // 習得済みIDリストを更新して保存
     const newLearnedIds = [...learnedIds, currentWordIndex];
     setLearnedIds(newLearnedIds);
-    localStorage.setItem('learned_words', JSON.stringify(newLearnedIds));
 
     // 今のノック用リストからこの単語を消す
     const newIndices = unlearnedIndices.filter(i => i !== currentWordIndex);
@@ -96,7 +118,7 @@ function App() {
       setLearnedIds([]);
       setUnlearnedIndices(wordList.map((_, i) => i)); // 全番号を復活
       setIndex(0);
-      localStorage.removeItem('learned_words');
+      localStorage.clear(); // すべての保存データを削除
     }
   };
 
