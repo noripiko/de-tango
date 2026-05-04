@@ -59,10 +59,19 @@ function App() {
   // --- ハンドラー系 ---
   const handleCardClick = () => { if (currentWord) setIsFlipped(!isFlipped); };
 
+  // handleNextButton の下あたりに追加
   const handleNextButton = () => {
     setIsFlipped(false);
     if (unlearnedIndices.length > 0) {
       setIndex((prev) => (prev + 1) % unlearnedIndices.length);
+    }
+  };
+
+  // 【追加】前の単語に戻る処理
+  const handlePrevButton = () => {
+    setIsFlipped(false);
+    if (unlearnedIndices.length > 0) {
+      setIndex((prev) => (prev - 1 + unlearnedIndices.length) % unlearnedIndices.length);
     }
   };
 
@@ -148,6 +157,7 @@ function App() {
           wordList={wordList}
           markAsLearned={markAsLearned}
           handleNextButton={handleNextButton}
+          handlePrevButton={handlePrevButton}
         />
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center gap-6">

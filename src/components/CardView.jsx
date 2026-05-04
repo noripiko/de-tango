@@ -1,6 +1,5 @@
-import React from 'react';
+import { useState } from 'react';
 
-// 学習メイン画面（カード表示）コンポーネント
 function CardView({ 
   currentWord, 
   isFlipped, 
@@ -11,80 +10,131 @@ function CardView({
   learnedIds, 
   wordList, 
   markAsLearned, 
-  handleNextButton 
+  handleNextButton,
+  handlePrevButton 
 }) {
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [drag, setDrag] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  // --- スワイプ制御 ---
+  const onStart = (e) => {
+    // ボタンのクリック時はスワイプを開始しない
+    if (e.target.closest('button')) return;
+
+    const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+    setStartPos({ x: clientX, y: clientY });
+    setIsDragging(true);
+  };
+
+  const onMove = (e) => {
+    if (!isDragging) return;
+    const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+    setDrag({ x: clientX - startPos.x, y: clientY - startPos.y });
+  };
+
+  const onEnd = () => {
+    if (!isDragging) return;
+
+    const absX = Math.abs(drag.x);
+    const absY = Math.abs(drag.y);
+    const threshold = 60;
+
+    if (absY > absX && drag.y < -threshold) {
+      handleCardClick(); // 上：めくる
+    } else if (absX > threshold) {
+      if (drag.x > 0) handleNextButton(); // 右：次
+      else handlePrevButton?.(); // 左：戻る
+    }
+
+    setIsDragging(false);
+    setDrag({ x: 0, y: 0 });
+  };
+
+  const cardTransformStyle = {
+    transform: `translate3d(${drag.x}px, ${drag.y * 0.4}px, 0) rotate(${drag.x * 0.05}deg)`,
+    transition: isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+  };
+
+  // 音声ボタンコンポーネント（カード内に配置用）
+  const AudioButton = () => (
+    <button 
+      onClick={(e) => { 
+        e.stopPropagation(); // めくる・スワイプ判定を防止
+        playAudio(currentWord.de); 
+      }}
+      onMouseDown={(e) => e.stopPropagation()} // ドラッグ開始を防止
+      onTouchStart={(e) => e.stopPropagation()}
+      className="absolute bottom-8 left-1/2 -translate-x-1/2 w-14 h-14 bg-orange-500 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all pointer-events-auto z-50"
+      aria-label="音声再生"
+    >
+      <svg className="w-8 h-8 fill-white" viewBox="0 0 24 24">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+    </button>
+  );
+
   return (
     <>
-      {/* カード部分：SE対策で上下の余白(my-4→my-2)を少し削る */}
-      <div className="card-container w-80 cursor-pointer my-2" onClick={handleCardClick}>
-        <div className={`card-inner ${isFlipped ? 'is-flipped' : ''}`}>
-          <div className="card-face bg-white border-4 border-orange-100 text-4xl font-bold text-orange-500 px-8 text-center">
-            {currentWord.de}
-          </div>
-          <div className="card-face card-back bg-orange-400 text-4xl font-bold text-white px-8 text-center">
-            {currentWord.jp}
+      {/* カードコンテナ */}
+      <div 
+        className="card-container w-80 h-[450px] my-4 touch-none select-none relative cursor-grab active:cursor-grabbing"
+        onMouseDown={onStart}
+        onMouseMove={onMove}
+        onMouseUp={onEnd}
+        onMouseLeave={onEnd}
+        onTouchStart={onStart}
+        onTouchMove={onMove}
+        onTouchEnd={onEnd}
+      >
+        <div style={cardTransformStyle} className="w-full h-full">
+          <div className={`card-inner w-full h-full ${isFlipped ? 'is-flipped' : ''}`}>
+            {/* 前面 */}
+            <div className="card-face bg-white border-4 border-orange-100 text-4xl font-bold text-orange-500 px-8 text-center flex flex-col items-center justify-center shadow-xl rounded-3xl relative">
+              <span className="mb-12">{currentWord.de}</span>
+              <AudioButton />
+            </div>
+            {/* 背面 */}
+            <div className="card-face card-back bg-orange-400 text-4xl font-bold text-white px-8 text-center flex flex-col items-center justify-center shadow-xl rounded-3xl relative">
+              <span className="mb-12">{currentWord.jp}</span>
+              <AudioButton />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* アクションエリア：全体の隙間(gap-4→gap-2)を調整 */}
-      <div className="flex flex-col items-center gap-2 w-full max-w-sm mb-4">
-        
-        {/* 【ここが修正ポイント】サブボタン行に再生ボタンをインライン化 */}
-        <div className="flex gap-4 items-center justify-center w-full px-2">
-          <button 
-            onClick={shuffleWords}
-            className="flex-1 max-w-[100px] text-orange-400 bg-white py-2 rounded-full text-[12px] font-bold shadow-sm border border-orange-100 active:scale-95 transition-all"
-          >
-            シャッフル
-          </button>
-          
-          {/* 中央に配置したコンパクト再生ボタン */}
-          <button 
-            onClick={(e) => { e.stopPropagation(); playAudio(currentWord.de); }}
-            className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all shrink-0"
-            aria-label="音声再生"
-          >
-            <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-          </button>
+      <div className="flex flex-col items-center gap-6 w-full max-w-sm mb-4">
 
+        {/* 覚えた！ボタン */}
+        <div className="w-full px-4">
           <button 
-            onClick={() => setIsListView(true)}
-            className="flex-1 max-w-[100px] text-slate-400 bg-white py-2 rounded-full text-[12px] font-bold shadow-sm border border-slate-100 active:scale-95 transition-all"
+            onClick={markAsLearned}
+            className="w-full bg-orange-500 text-white py-4 rounded-full font-bold text-xl shadow-lg active:scale-95 transition-all"
           >
-            リスト
+            覚えた！
           </button>
         </div>
 
         {/* 進捗ゲージ */}
-        <div className="w-1/2 text-center mt-1">
+        <div className="w-1/2 text-center">
           <div className="w-full h-1.5 bg-orange-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-orange-400 transition-all duration-300" 
-              style={{ width: `${(learnedIds.length / wordList.length) * 100}%` }}
-            ></div>
+            <div className="h-full bg-orange-400 transition-all duration-300" style={{ width: `${(learnedIds.length / wordList.length) * 100}%` }}></div>
           </div>
           <p className="text-[11px] text-orange-400 mt-1 font-bold">{learnedIds.length} / {wordList.length}</p>
         </div>
 
-        {/* メインボタン：ここもSE用に少しだけ高さを抑える(py-4→py-3.5) */}
-        <div className="flex gap-3 w-full px-4 mt-1">
-          <button 
-            onClick={markAsLearned}
-            className="flex-[1.2] bg-orange-500 text-white py-3.5 rounded-full font-bold text-lg shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
-          >
-            覚えた！
+        {/* サブボタン（再生ボタンを抜いたので2つに） */}
+        <div className="flex gap-4 items-center justify-center w-full px-2">
+          <button onClick={shuffleWords} className="flex-1 max-w-[120px] text-orange-400 bg-white py-2.5 rounded-full text-[14px] font-bold shadow-sm border border-orange-100 active:scale-95">
+            シャッフル
           </button>
-
-          <button
-            onClick={handleNextButton}
-            className="flex-1 bg-white border-2 border-orange-200 text-orange-500 py-3.5 rounded-full font-bold text-lg shadow-md active:scale-95 transition-all"
-          >
-            NEXT
+          <button onClick={() => setIsListView(true)} className="flex-1 max-w-[120px] text-slate-400 bg-white py-2.5 rounded-full text-[14px] font-bold shadow-sm border border-slate-100 active:scale-95">
+            リスト
           </button>
         </div>
+
       </div>
     </>
   );
