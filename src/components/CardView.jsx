@@ -17,9 +17,9 @@ function CardView({
   const [drag, setDrag] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
 
-  // --- スワイプ制御 ---
+  // --- スワイプ＆タップ制御 ---
   const onStart = (e) => {
-    // ボタンのクリック時はスワイプを開始しない
+    // ボタンのクリック時はスワイプ・タップを開始しない
     if (e.target.closest('button')) return;
 
     const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
@@ -35,18 +35,22 @@ function CardView({
     setDrag({ x: clientX - startPos.x, y: clientY - startPos.y });
   };
 
-  const onEnd = () => {
+const onEnd = (e) => { // e を追加
     if (!isDragging) return;
 
     const absX = Math.abs(drag.x);
     const absY = Math.abs(drag.y);
-    const threshold = 60;
+    const threshold = 40; // 少し感度を上げました
 
-    if (absY > absX && drag.y < -threshold) {
-      handleCardClick(); // 上：めくる
+    if (absX < 8 && absY < 8) {
+      // ① タップ判定
+      // preventDefaultでブラウザの余計な挙動を止める
+      if (e.cancelable) e.preventDefault(); 
+      handleCardClick(); 
     } else if (absX > threshold) {
-      if (drag.x > 0) handleNextButton(); // 右：次
-      else handlePrevButton?.(); // 左：戻る
+      // ② 左右スワイプ
+      if (drag.x > 0) handleNextButton();
+      else handlePrevButton?.();
     }
 
     setIsDragging(false);
@@ -54,6 +58,7 @@ function CardView({
   };
 
   const cardTransformStyle = {
+    // 上への移動(drag.y * 0.4)は残しておくと、斜めに動かした時に少し浮いて可愛いです
     transform: `translate3d(${drag.x}px, ${drag.y * 0.4}px, 0) rotate(${drag.x * 0.05}deg)`,
     transition: isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
   };
@@ -62,7 +67,7 @@ function CardView({
   const AudioButton = () => (
     <button 
       onClick={(e) => { 
-        e.stopPropagation(); // めくる・スワイプ判定を防止
+        e.stopPropagation(); // めくる判定を防止
         playAudio(currentWord.de); 
       }}
       onMouseDown={(e) => e.stopPropagation()} // ドラッグ開始を防止
@@ -106,7 +111,6 @@ function CardView({
       </div>
 
       <div className="flex flex-col items-center gap-6 w-full max-w-sm mb-4">
-
         {/* 覚えた！ボタン */}
         <div className="w-full px-4">
           <button 
@@ -125,7 +129,7 @@ function CardView({
           <p className="text-[11px] text-orange-400 mt-1 font-bold">{learnedIds.length} / {wordList.length}</p>
         </div>
 
-        {/* サブボタン（再生ボタンを抜いたので2つに） */}
+        {/* サブボタン */}
         <div className="flex gap-4 items-center justify-center w-full px-2">
           <button onClick={shuffleWords} className="flex-1 max-w-[120px] text-orange-400 bg-white py-2.5 rounded-full text-[14px] font-bold shadow-sm border border-orange-100 active:scale-95">
             シャッフル
@@ -134,7 +138,6 @@ function CardView({
             リスト
           </button>
         </div>
-
       </div>
     </>
   );
